@@ -54,7 +54,7 @@ class App:
 
             cf_policies = cloudflare.get_firewall_policies(self.name_prefix)            
             if len(cf_policies)>0:
-                self.logger.info(f"Deleting firewall policy {cf_policies[0]["name"]}")
+                self.logger.info(f"Deleting firewall policy {cf_policies[0]['name']}")
                 cloudflare.delete_firewall_policy(cf_policies[0]["id"])
 
             # delete the lists
