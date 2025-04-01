@@ -15,3 +15,5 @@ Simple python script, runnable from GHA, that allows importing PiHole domain blo
     * `CF_API_TOKEN` with API Token
 5. Modify `config.ini` with your preferred blocking lists
 6. Enable action
+
+1
