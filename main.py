@@ -37,9 +37,7 @@ class App:
         unique_domains = pd.unique(pd.array(all_domains))
 
         cf_policies = cloudflare.get_firewall_policies(self.name_prefix)
-        print(cf_policies[0]['name'])
-        print(f"{self.name_prefix}_B")
-        print(cf_policies[0]['name'].startswith(f"{self.name_prefix}_B"))
+
         if len(cf_policies) == 0 or cf_policies[0]['name'].startswith(f"{self.name_prefix}_B"):
             new_name_prefix = f"{self.name_prefix}_A"
             old_name_prefix = f"{self.name_prefix}_B"
