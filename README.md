@@ -17,3 +17,4 @@ Simple python script, runnable from GHA, that allows importing PiHole domain blo
 6. Enable action
 
 1
+2
