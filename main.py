@@ -45,6 +45,12 @@ class App:
             new_name_prefix = f"{self.name_prefix}_B"
             old_name_prefix = f"{self.name_prefix}_A"
 
+        new_cf_lists_cleanup = cloudflare.get_lists(new_name_prefix)
+        for l in new_cf_lists_cleanup:
+            self.logger.info(f"Deleting old list {l['name']}")
+            cloudflare.delete_list(l["id"])
+            time.sleep(1)
+
         # Create new lists
         new_cf_lists = []
         try:
