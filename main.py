@@ -43,12 +43,15 @@ class App:
 
         cf_policies = cloudflare.get_firewall_policies(self.name_prefix)
 
-        if len(cf_policies) == 0 or cf_policies[0]['name'].startswith(f"{self.name_prefix}_B"):
-            new_name_prefix = f"{self.name_prefix}_A"
-            old_name_prefix = f"{self.name_prefix}_B"
-        else:
+        # Determine the active slot by searching all returned policies rather than
+        # relying on API list ordering, which is not guaranteed to be stable.
+        has_a_policy = any(p['name'].startswith(f"{self.name_prefix}_A") for p in cf_policies)
+        if has_a_policy:
             new_name_prefix = f"{self.name_prefix}_B"
             old_name_prefix = f"{self.name_prefix}_A"
+        else:
+            new_name_prefix = f"{self.name_prefix}_A"
+            old_name_prefix = f"{self.name_prefix}_B"
 
         new_cf_lists_cleanup = cloudflare.get_lists(new_name_prefix)
         for l in new_cf_lists_cleanup:
