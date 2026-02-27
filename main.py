@@ -5,7 +5,6 @@ from typing import List
 import requests
 import cloudflare
 import configparser
-import pandas as pd
 import os
 import time
 
@@ -41,7 +40,7 @@ class App:
             domains = self.convert_to_domain_list(list_name)
             all_domains = all_domains + domains
 
-        unique_domains = pd.unique(pd.array(all_domains))
+        unique_domains = list(dict.fromkeys(all_domains))
 
         cf_policies = cloudflare.get_firewall_policies(self.name_prefix)
 
