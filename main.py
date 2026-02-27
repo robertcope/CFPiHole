@@ -114,7 +114,7 @@ class App:
     def download_file(self, url, name):
         self.logger.info(f"Downloading file from {url}")
 
-        r = requests.get(url, allow_redirects=True)
+        r = requests.get(url, allow_redirects=True, timeout=30)
 
         path = pathlib.Path("tmp/" + name)
         with open(path, "wb") as f:
