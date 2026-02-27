@@ -28,7 +28,7 @@ def get_lists(name_prefix: str):
     if r.status_code != 200:
         raise Exception("Failed to get Cloudflare lists")
 
-    lists = r.json()["result"] or []
+    lists = r.json().get("result") or []
 
     return [l for l in lists if l["name"].startswith(name_prefix)]
 
@@ -74,7 +74,7 @@ def get_firewall_policies(name_prefix: str):
     if r.status_code != 200:
         raise Exception("Failed to get Cloudflare firewall policies")
 
-    lists = r.json()["result"] or []
+    lists = r.json().get("result") or []
 
     return [l for l in lists if l["name"].startswith(name_prefix)]
 
