@@ -48,7 +48,7 @@ def create_list(name: str, domains: List[str]):
 
     if r.status_code != 200:
         raise Exception("Failed to create Cloudflare list: " + str(r.content))
-    print ("Created list " + name)
+    logger.info(f"Created list {name}")
     return r.json()["result"]
 
 
