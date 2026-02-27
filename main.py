@@ -145,7 +145,10 @@ class App:
 
             if is_hosts_file:
                 # remove the ip address and the trailing newline
-                domain = line.split()[1].rstrip()
+                parts = line.split()
+                if len(parts) < 2:
+                    continue
+                domain = parts[1].rstrip()
 
                 # skip the localhost entry
                 if domain == "localhost":
