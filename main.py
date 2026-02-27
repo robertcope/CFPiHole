@@ -27,6 +27,9 @@ class App:
         config = configparser.ConfigParser()
         config.read('config.ini')
 
+        if "Lists" not in config:
+            raise ValueError("config.ini is missing the [Lists] section")
+
         #check tmp dir
         os.makedirs("./tmp", exist_ok=True)
 
