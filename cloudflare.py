@@ -58,10 +58,10 @@ def delete_list(list_id: str):
     )
 
     logger.debug(f"[delete_list] {r.status_code}")
-    if r.status_code != 200:
+    if r.status_code not in (200, 204):
         raise Exception("Failed to delete Cloudflare list: " + str(r.content))
 
-    return r.json()["result"]
+    return r.json().get("result") if r.content else None
 
 
 def get_firewall_policies(name_prefix: str):
@@ -85,10 +85,10 @@ def delete_firewall_policy(policy_id: str):
 
     logger.debug(f"[delete_policy] {r.status_code}")
 
-    if r.status_code != 200:
+    if r.status_code not in (200, 204):
         raise Exception("Failed to delete Cloudflare policy")
 
-    return r.json()["result"]
+    return r.json().get("result") if r.content else None
 
 
 def create_gateway_policy(name: str, list_ids: List[str]):
