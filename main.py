@@ -57,7 +57,10 @@ class App:
         new_cf_lists_cleanup = cloudflare.get_lists(new_name_prefix)
         for l in new_cf_lists_cleanup:
             self.logger.info(f"Deleting old list {l['name']}")
-            cloudflare.delete_list(l["id"])
+            try:
+                cloudflare.delete_list(l["id"])
+            except Exception as e:
+                self.logger.warning(f"Failed to delete list {l['name']}: {e}, will retry on next run")
             time.sleep(1)
 
         # Create new lists
