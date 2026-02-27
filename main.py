@@ -15,7 +15,12 @@ class App:
         self.whitelist = self.loadWhitelist()
 
     def loadWhitelist(self):
-        return open("whitelist.txt", "r").read().split("\n")
+        try:
+            with open("whitelist.txt", "r") as f:
+                return f.read().splitlines()
+        except FileNotFoundError:
+            self.logger.warning("whitelist.txt not found, proceeding with empty whitelist")
+            return []
 
     def run(self):
         logging.basicConfig(level=logging.INFO)
@@ -111,7 +116,8 @@ class App:
         r = requests.get(url, allow_redirects=True)
 
         path = pathlib.Path("tmp/" + name)
-        open(path, "wb").write(r.content)
+        with open(path, "wb") as f:
+            f.write(r.content)
 
         self.logger.info(f"File size: {path.stat().st_size}")
 
