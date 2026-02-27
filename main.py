@@ -23,8 +23,6 @@ class App:
             return []
 
     def run(self):
-        logging.basicConfig(level=logging.INFO)
-
         config = configparser.ConfigParser()
         config.read('config.ini')
 
@@ -176,7 +174,7 @@ class App:
 
 
 if __name__ == "__main__":
-
+    logging.basicConfig(level=logging.INFO)
 
     app = App()
     app.run()
