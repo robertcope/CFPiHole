@@ -127,10 +127,14 @@ class App:
         with open("tmp/"+file_name, "r") as f:
             data = f.read()
 
-        # check if the file is a hosts file or a list of domain
+        # check if the file is a hosts file or a list of domains by
+        # inspecting individual non-comment lines, not the full file string
         is_hosts_file = False
-        for ip in ["127.0.0.1", "::1", "0.0.0.0"]:
-            if ip in data:
+        for line in data.splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#") or stripped.startswith(";"):
+                continue
+            if any(stripped.startswith(ip) for ip in ["127.0.0.1", "::1", "0.0.0.0"]):
                 is_hosts_file = True
                 break
 
