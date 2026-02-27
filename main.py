@@ -115,6 +115,7 @@ class App:
         self.logger.info(f"Downloading file from {url}")
 
         r = requests.get(url, allow_redirects=True, timeout=30)
+        r.raise_for_status()
 
         path = pathlib.Path("tmp/" + name)
         with open(path, "wb") as f:
