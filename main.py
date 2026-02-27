@@ -1,5 +1,6 @@
 import logging
 import pathlib
+import re
 from typing import List
 import requests
 import cloudflare
@@ -98,7 +99,6 @@ class App:
         self.logger.info("Done")
 
     def is_valid_hostname(self, hostname):
-        import re
         if len(hostname) > 255:
             return False
         hostname = hostname.rstrip(".")
@@ -163,7 +163,10 @@ class App:
             #Check whitelist
             if domain in self.whitelist:
                 continue
-            
+
+            if not self.is_valid_hostname(domain):
+                self.logger.debug(f"Skipping invalid hostname: {domain}")
+                continue
 
             domains.append(domain)
 
