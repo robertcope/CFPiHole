@@ -1,10 +1,10 @@
 import logging
 import pathlib
+import re
 from typing import List
 import requests
 import cloudflare
 import configparser
-import pandas as pd
 import os
 import time
 
@@ -15,13 +15,19 @@ class App:
         self.whitelist = self.loadWhitelist()
 
     def loadWhitelist(self):
-        return open("whitelist.txt", "r").read().split("\n")
+        try:
+            with open("whitelist.txt", "r") as f:
+                return f.read().splitlines()
+        except FileNotFoundError:
+            self.logger.warning("whitelist.txt not found, proceeding with empty whitelist")
+            return []
 
     def run(self):
-        logging.basicConfig(level=logging.INFO)
-
         config = configparser.ConfigParser()
         config.read('config.ini')
+
+        if "Lists" not in config:
+            raise ValueError("config.ini is missing the [Lists] section")
 
         #check tmp dir
         os.makedirs("./tmp", exist_ok=True)
@@ -34,21 +40,27 @@ class App:
             domains = self.convert_to_domain_list(list_name)
             all_domains = all_domains + domains
 
-        unique_domains = pd.unique(pd.array(all_domains))
+        unique_domains = list(dict.fromkeys(all_domains))
 
         cf_policies = cloudflare.get_firewall_policies(self.name_prefix)
 
-        if len(cf_policies) == 0 or cf_policies[0]['name'].startswith(f"{self.name_prefix}_B"):
-            new_name_prefix = f"{self.name_prefix}_A"
-            old_name_prefix = f"{self.name_prefix}_B"
-        else:
+        # Determine the active slot by searching all returned policies rather than
+        # relying on API list ordering, which is not guaranteed to be stable.
+        has_a_policy = any(p['name'].startswith(f"{self.name_prefix}_A") for p in cf_policies)
+        if has_a_policy:
             new_name_prefix = f"{self.name_prefix}_B"
             old_name_prefix = f"{self.name_prefix}_A"
+        else:
+            new_name_prefix = f"{self.name_prefix}_A"
+            old_name_prefix = f"{self.name_prefix}_B"
 
         new_cf_lists_cleanup = cloudflare.get_lists(new_name_prefix)
         for l in new_cf_lists_cleanup:
             self.logger.info(f"Deleting old list {l['name']}")
-            cloudflare.delete_list(l["id"])
+            try:
+                cloudflare.delete_list(l["id"])
+            except Exception as e:
+                self.logger.warning(f"Failed to delete list {l['name']}: {e}, will retry on next run")
             time.sleep(1)
 
         # Create new lists
@@ -92,7 +104,6 @@ class App:
         self.logger.info("Done")
 
     def is_valid_hostname(self, hostname):
-        import re
         if len(hostname) > 255:
             return False
         hostname = hostname.rstrip(".")
@@ -108,10 +119,12 @@ class App:
     def download_file(self, url, name):
         self.logger.info(f"Downloading file from {url}")
 
-        r = requests.get(url, allow_redirects=True)
+        r = requests.get(url, allow_redirects=True, timeout=30)
+        r.raise_for_status()
 
         path = pathlib.Path("tmp/" + name)
-        open(path, "wb").write(r.content)
+        with open(path, "wb") as f:
+            f.write(r.content)
 
         self.logger.info(f"File size: {path.stat().st_size}")
 
@@ -119,10 +132,14 @@ class App:
         with open("tmp/"+file_name, "r") as f:
             data = f.read()
 
-        # check if the file is a hosts file or a list of domain
+        # check if the file is a hosts file or a list of domains by
+        # inspecting individual non-comment lines, not the full file string
         is_hosts_file = False
-        for ip in ["127.0.0.1", "::1", "0.0.0.0"]:
-            if ip in data:
+        for line in data.splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#") or stripped.startswith(";"):
+                continue
+            if any(stripped.startswith(ip) for ip in ["127.0.0.1", "::1", "0.0.0.0"]):
                 is_hosts_file = True
                 break
 
@@ -136,7 +153,10 @@ class App:
 
             if is_hosts_file:
                 # remove the ip address and the trailing newline
-                domain = line.split()[1].rstrip()
+                parts = line.split()
+                if len(parts) < 2:
+                    continue
+                domain = parts[1].rstrip()
 
                 # skip the localhost entry
                 if domain == "localhost":
@@ -148,7 +168,10 @@ class App:
             #Check whitelist
             if domain in self.whitelist:
                 continue
-            
+
+            if not self.is_valid_hostname(domain):
+                self.logger.debug(f"Skipping invalid hostname: {domain}")
+                continue
 
             domains.append(domain)
 
@@ -164,7 +187,7 @@ class App:
 
 
 if __name__ == "__main__":
-
+    logging.basicConfig(level=logging.INFO)
 
     app = App()
     app.run()

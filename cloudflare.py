@@ -9,8 +9,8 @@ logger = logging.getLogger("cloudflare")
 from dotenv import load_dotenv
 load_dotenv()
 
-CF_API_TOKEN = os.getenv("CF_API_TOKEN") or os.environ.get("CF_API_TOKEN")
-CF_IDENTIFIER = os.getenv("CF_IDENTIFIER") or os.environ.get("CF_IDENTIFIER")
+CF_API_TOKEN = os.getenv("CF_API_TOKEN")
+CF_IDENTIFIER = os.getenv("CF_IDENTIFIER")
 if not CF_API_TOKEN or not CF_IDENTIFIER:
     raise Exception("Missing Cloudflare credentials")
 
@@ -28,7 +28,7 @@ def get_lists(name_prefix: str):
     if r.status_code != 200:
         raise Exception("Failed to get Cloudflare lists")
 
-    lists = r.json()["result"] or []
+    lists = r.json().get("result") or []
 
     return [l for l in lists if l["name"].startswith(name_prefix)]
 
@@ -48,7 +48,7 @@ def create_list(name: str, domains: List[str]):
 
     if r.status_code != 200:
         raise Exception("Failed to create Cloudflare list: " + str(r.content))
-    print ("Created list " + name)
+    logger.info(f"Created list {name}")
     return r.json()["result"]
 
 
@@ -74,7 +74,7 @@ def get_firewall_policies(name_prefix: str):
     if r.status_code != 200:
         raise Exception("Failed to get Cloudflare firewall policies")
 
-    lists = r.json()["result"] or []
+    lists = r.json().get("result") or []
 
     return [l for l in lists if l["name"].startswith(name_prefix)]
 
